@@ -32,7 +32,8 @@ const DEFAULT_ROWS = 10;
 export class ListFrameworkPageComponent implements OnInit {
 	frameworks: ReadOneFramework[] = [];
 	total = 0;
-	loading = false;
+	// Starts true: the first lazy load fires during change detection (avoids NG0100).
+	loading = true;
 
 	first = 0;
 	rows = DEFAULT_ROWS;

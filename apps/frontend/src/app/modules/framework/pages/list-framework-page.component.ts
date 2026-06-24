@@ -80,6 +80,14 @@ export class ListFrameworkPageComponent implements OnInit {
 		this.loadFrameworks();
 	}
 
+	goToCreate() {
+		this.router.navigate(["/app/frameworks/new"]);
+	}
+
+	goToEdit(framework: ReadOneFramework) {
+		this.router.navigate(["/app/frameworks", framework.id, "edit"]);
+	}
+
 	private restoreStateFromUrl() {
 		const q = this.route.snapshot.queryParamMap;
 		this.rows = Number(q.get("pageSize")) || DEFAULT_ROWS;

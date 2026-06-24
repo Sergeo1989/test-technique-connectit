@@ -101,4 +101,20 @@ describe("ListFrameworkPageComponent (container)", () => {
 			expect.not.objectContaining({ name: expect.anything() })
 		);
 	});
+
+	it("navigates to the create view", () => {
+		const { component, router } = setup();
+
+		component.goToCreate();
+
+		expect(router.navigate).toHaveBeenCalledWith(["/app/frameworks/new"]);
+	});
+
+	it("navigates to the edit view of the clicked framework", () => {
+		const { component, router } = setup();
+
+		component.goToEdit({ id: 7 } as never);
+
+		expect(router.navigate).toHaveBeenCalledWith(["/app/frameworks", 7, "edit"]);
+	});
 });

@@ -1,0 +1,60 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex max-w-xl flex-col gap-4">
+	<div class="flex flex-col gap-1">
+		<label class="text-sm font-medium text-slate-600" for="name">Nom</label>
+		<input id="name" type="text" pInputText formControlName="name" />
+		<small *ngIf="isInvalid('name')" class="text-red-500">Le nom est requis.</small>
+	</div>
+
+	<div class="flex flex-col gap-1">
+		<label class="text-sm font-medium text-slate-600" for="img">Image (URL)</label>
+		<input id="img" type="text" pInputText formControlName="img" placeholder="https://…" />
+		<small *ngIf="isInvalid('img')" class="text-red-500">L'URL de l'image est requise.</small>
+	</div>
+
+	<div class="flex flex-col gap-1">
+		<label class="text-sm font-medium text-slate-600">Langage de programmation</label>
+		<p-dropdown
+			formControlName="codingLanguageId"
+			[options]="languageOptions"
+			optionLabel="label"
+			optionValue="value"
+			placeholder="Sélectionner…"
+		/>
+		<small *ngIf="isInvalid('codingLanguageId')" class="text-red-500">Le langage est requis.</small>
+	</div>
+
+	<div class="flex flex-col gap-1">
+		<label class="text-sm font-medium text-slate-600">Type de framework</label>
+		<p-dropdown
+			formControlName="frameworkTypeId"
+			[options]="typeOptions"
+			optionLabel="label"
+			optionValue="value"
+			placeholder="Sélectionner…"
+		/>
+		<small *ngIf="isInvalid('frameworkTypeId')" class="text-red-500">Le type est requis.</small>
+	</div>
+
+	<div class="flex flex-col gap-1">
+		<label class="text-sm font-medium text-slate-600">Date de sortie</label>
+		<p-calendar formControlName="releasedAt" dateFormat="dd/mm/yy" [showIcon]="true" />
+		<small *ngIf="isInvalid('releasedAt')" class="text-red-500">La date de sortie est requise.</small>
+	</div>
+
+	<div class="mt-2 flex gap-2">
+		<button
+			type="submit"
+			class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+			[disabled]="submitting"
+		>
+			Enregistrer
+		</button>
+		<button
+			type="button"
+			class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
+			(click)="onCancel()"
+		>
+			Annuler
+		</button>
+	</div>
+</form>

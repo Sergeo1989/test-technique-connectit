@@ -1,0 +1,48 @@
+# .readme-ai
+
+## Outils d'IA utilisés
+
+- **Claude (Claude Code, agent CLI)** comme binôme de développement sur tout le projet.
+- Usages : reconnaissance du code existant, génération de code et de tests **sous ma direction**, diagnostic de bugs, j'ai exécuté des tests unitaires, les tâches mécaniques (git, lint, build, exécution des tests), et une **revue critique** que j'ai demandée en posture « Solutions Engineer » pour challenger le livrable.
+
+## Intégration dans mon flux de travail — approche feature-driven
+
+J'ai imposé une méthode stricte, **une feature à la fois** :
+
+1. **Plan écrit** (entités touchées, contrats d'API, impacts front, cas limites, stratégie de test) que je validais **avant toute ligne de code**.
+2. **Backend = 1 commit** (NestJS + Prisma) avec ses tests — unitaires (Prisma mocké) **et** intégration HTTP (supertest) — verts avant commit.
+3. **Frontend = 1 commit séparé** (Angular + PrimeNG) avec ses tests, verts avant commit.
+
+Chaque commit est atomique, en **Conventional Commits**, back et front **isolés**, au-dessus d'un commit *baseline* qui fige le starter tel que livré (pour que mon travail soit lisible en diff isolé).
+
+## Méthodologie / type de prompts
+
+- **Phase 0 de reconnaissance** avant de coder (schéma Prisma, GET existant, **version exacte de PrimeNG**, runner de tests). Elle m'a évité une erreur : PrimeNG est en **v17**, donc `p-dropdown` (et non `p-select` de la v18).
+- Je pilotais par **arbitrages** : à chaque décision d'archi, je demandais les options + leurs trade-offs, puis je tranchais.
+- **Validation continue par l'app réelle**, pas seulement par les tests : c'est ainsi que j'ai détecté l'écran blanc initial, l'erreur `NG0100`, et un comportement de filtre faux.
+
+## Décisions réelles que j'ai pilotées
+
+- **Tableau vs grille** : `p-table` conservé car le README l'exige (« Le tableau des frameworks permet de filtrer »).
+- **Pagination serveur** : enveloppe `{ data, total, page, pageSize }`, `findMany` + `count` dans un seul `$transaction` (total cohérent avec la page).
+- **SQLite** : filtre `name` en `contains` seul — `mode:"insensitive"` non supporté, et `LIKE` est déjà insensible à la casse ASCII.
+- **Types partagés via NX** : `PaginatedResponse<T>` dans `libs/database`, et **imports `type-only`** du barrel API côté Angular. Sans ça, importer un *enum* (valeur runtime) traînait tout le graphe NestJS/Express dans le bundle navigateur — build cassé sur `serve-static`, que j'ai diagnostiqué puis corrigé.
+- **Filtres persistés dans l'URL** (query params), pas localStorage → partageable et résistant au rechargement.
+- **Architecture Container / Presentational** : page « intelligente » (services, état, URL, requêtes) vs composant tableau « de présentation » (`OnPush`, aucune dépendance service), découplés par un événement **métier** `FrameworkTableLoad` (le container ne dépend pas de PrimeNG).
+- **Conventions imposées** : un composant = 3 fichiers (`.ts` / `.html` / `.scss`), commentaires **au strict minimum**.
+- **Formulaire partagé création/édition** (`FrameworkFormComponent`, reactive form typé, `OnPush`) ; conversion de date par la sérialisation `Date → ISO` d'HttpClient (validée `@IsDateString`).
+- **Intégrité déplacée en base** : d'abord des vérifications applicatives, que j'ai ensuite **retirées au profit de la base** (index `@unique` sur `name`, contraintes FK) + un `PrismaExceptionFilter` global (P2002 → 409, P2003 → 400, P2025 → 404) pour garder une frontière domaine/HTTP propre.
+- **Bug de fond corrigé** : le seed stockait les `DateTime` en **TEXTE** alors que Prisma/SQLite les compare en **entier (ms)** → tri/filtres faux dès qu'une ligne est créée via l'app. Migration de normalisation. *(J'avais ajouté un filtre « tranche de dates » pour le mettre en évidence, puis je l'ai **retiré** car hors périmètre — mais j'ai gardé la correction d'intégrité.)*
+- **`deletedAt` masqué** du contrat de sortie (Prisma `omit`), pour ne pas exposer un champ de persistance.
+- **Corrections du starter** repérées au passage : 2 URLs de services front erronées, `@prisma/client` non déclaré dans `libs/database`, variable inutilisée dans le bootstrap.
+- **Scope explicite** : durcissement prod (rate limiting, CORS restreint, helmet, auth, Swagger) et quelques pistes de tests (e2e réel, seuils de couverture) sont **volontairement différés** et tracés dans `TODO.md` — pour montrer qu'ils sont pensés, pas oubliés.
+
+## Ce que j'ai fait moi-même vs ce que l'IA a généré
+
+- **Moi** : la méthodologie, **toutes** les décisions d'architecture et de scope, la validation/amendement de chaque plan, les arbitrages (tableau vs grille, archi container/présentation, conventions, intégrité en base vs applicative, retrait du filtre dates), la détection des bugs par test de l'app réelle, et la revue critique finale.
+- **L'IA** : la production du code et des tests sous ma direction, les propositions de plans, le diagnostic technique (cause racine du filtre dates, fuseau horaire, mismatch de stockage `text`/`integer`), et l'exécution mécanique (git, lint, build, tests).
+- En clair : l'IA a **accéléré l'exécution** ; le **jugement, les arbitrages et la responsabilité du résultat** sont les miens — y compris savoir *refuser* (retirer une feature inutile, ne pas surcharger le périmètre).
+
+## Note de transparence
+
+Les messages de commit ne mentionnent pas l'outil d'IA (choix délibéré pour un historique sobre et professionnel) ; **ce fichier est l'endroit où j'en rends compte de façon transparente**, comme demandé dans la consigne.

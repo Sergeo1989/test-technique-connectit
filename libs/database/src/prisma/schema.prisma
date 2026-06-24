@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../../../node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = "file:../db/dev.db"
+}
+
+model Framework {
+    id Int @id @default(autoincrement())
+
+    name             String
+    img              String
+    codingLanguageId Int
+    frameworkTypeId  Int
+    releasedAt       DateTime
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+
+    frameworkType  FrameworkType  @relation(fields: [frameworkTypeId], references: [id])
+    codingLanguage CodingLanguage @relation(fields: [codingLanguageId], references: [id])
+}
+
+model CodingLanguage {
+    id   Int    @id @default(autoincrement())
+    name String
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+
+    frameworks Framework[]
+}
+
+model FrameworkType {
+    id         Int         @id @default(autoincrement())
+    name       String
+    frameworks Framework[]
+}

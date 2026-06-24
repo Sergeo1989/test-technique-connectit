@@ -1,0 +1,65 @@
+button.c-button {
+	@apply flex cursor-pointer items-center justify-center gap-x-2 rounded-lg transition-all;
+
+	&:active:not(:disabled) {
+		@apply scale-[97%];
+	}
+
+	&:disabled {
+		@apply cursor-not-allowed opacity-50;
+	}
+
+	&:hover:not(:active):not(:disabled) {
+		@apply scale-[101%];
+	}
+
+	&.c-button {
+		&-color {
+			&-primary {
+				@apply border border-primary bg-primary text-white;
+
+				&:hover:not(:disabled) {
+					@apply bg-primary;
+				}
+			}
+
+			&-secondary {
+				@apply border border-secondary bg-secondary text-white;
+
+				&:hover:not(:disabled) {
+					@apply bg-secondary;
+				}
+			}
+
+			&-clear {
+				@apply border border-primary bg-white text-primary;
+
+				&:hover:not(:disabled) {
+					@apply bg-slate-200;
+				}
+			}
+
+			&-danger {
+				@apply border border-danger bg-danger text-primary;
+
+				&:hover:not(:disabled) {
+					@apply bg-danger;
+				}
+			}
+		}
+
+		&-size {
+			&-sm {
+				@apply p-1 text-xs;
+			}
+
+			&-md {
+				@apply p-2 text-sm;
+			}
+
+			&-lg {
+				@apply p-3 text-base;
+			}
+		}
+	}
+}

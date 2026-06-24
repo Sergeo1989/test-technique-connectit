@@ -1,0 +1,33 @@
+@use "sass:meta";
+@layer tailwind-base,primeng, tailwind-utilities;
+
+@layer tailwind-base {
+	@tailwind base;
+}
+
+@layer tailwind-utilities {
+	@tailwind components;
+	@tailwind utilities;
+}
+
+/* You can add global styles to this file, and also import other style files */
+
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+/*
+ @import css in scss adds the css to top of output css files... primeng layers would be the first layer and adding css layer ordering to theme file for project would have no effect.
+*/
+@include meta.load-css("primeng/resources/themes/saga-blue/theme.css");
+@include meta.load-css("primeng/resources/primeng.css");
+@include meta.load-css("primeicons/primeicons.css");
+
+@import "./primeng.override.scss";
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;700&display=swap");
+
+/* You can add global styles to this file, and also import other style files */
+
+@import "./cbutton.style.scss";
+
+* {
+	font-family: "Nunito", sans-serif;
+}

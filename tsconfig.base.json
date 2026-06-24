@@ -1,0 +1,33 @@
+{
+	"compileOnSave": false,
+	"compilerOptions": {
+		"rootDir": ".",
+		"sourceMap": true,
+		"declaration": false,
+		"moduleResolution": "node",
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"importHelpers": true,
+		"target": "es2015",
+		"module": "esnext",
+		"lib": ["es2020", "dom"],
+		"skipLibCheck": true,
+		"skipDefaultLibCheck": true,
+		"baseUrl": ".",
+		"paths": {
+			"@nx-nestjs-angular-starter/api/coding-language": ["libs/api/coding-language/src/index.ts"],
+			"@nx-nestjs-angular-starter/api/framework": ["libs/api/framework/src/index.ts"],
+			"@nx-nestjs-angular-starter/api/framework-type": ["libs/api/framework-type/src/index.ts"],
+			"@nx-nestjs-angular-starter/api/profile": ["libs/api/profile/src/index.ts"],
+			"@nx-nestjs-angular-starter/api/user": ["libs/api/user/src/index.ts"],
+			"@nx-nestjs-angular-starter/connectit-shared-api": ["libs/connectit-shared/api/src/index.ts"],
+			"@nx-nestjs-angular-starter/connectit-shared-frontend": ["libs/connectit-shared/frontend/src/index.ts"],
+			"@nx-nestjs-angular-starter/database": ["libs/database/src/index.ts"],
+			"@nx-nestjs-angular-starter/frontend-shared": ["libs/frontend/src/index.ts"]
+		}
+	},
+	"ts-node": {
+		"require": ["tsconfig-paths/register"]
+	},
+	"exclude": ["node_modules", "tmp"]
+}

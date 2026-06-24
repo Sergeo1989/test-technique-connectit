@@ -1,0 +1,13 @@
+# Add files here to ignore them from prettier formatting
+/dist
+/coverage
+/.nx/cache
+/node_modules
+package-lock.json
+/tmp
+/.angular
+/.git
+/git
+*.yml
+
+.angular

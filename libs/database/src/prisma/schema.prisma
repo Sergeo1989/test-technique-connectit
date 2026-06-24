@@ -17,7 +17,7 @@ datasource db {
 model Framework {
     id Int @id @default(autoincrement())
 
-    name             String
+    name             String @unique
     img              String
     codingLanguageId Int
     frameworkTypeId  Int
@@ -29,6 +29,9 @@ model Framework {
 
     frameworkType  FrameworkType  @relation(fields: [frameworkTypeId], references: [id])
     codingLanguage CodingLanguage @relation(fields: [codingLanguageId], references: [id])
+
+    @@index([codingLanguageId])
+    @@index([frameworkTypeId])
 }
 
 model CodingLanguage {

@@ -47,3 +47,7 @@ cypress.env.json
 
 # Workspace
 *.code-workspace
+# SQLite transient files
+*.db-journal
+*.db-wal
+*.db-shm

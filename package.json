@@ -5,7 +5,14 @@
 	"scripts": {
 		"api:serve": "npx nx serve api",
 		"frontend:serve": "npx nx serve frontend",
-		"lib-gen": "npx ts-node ./lib-generator.ts"
+		"lib-gen": "npx ts-node ./lib-generator.ts",
+		"test": "npx nx run-many -t test --all",
+		"test:affected": "npx nx affected -t test",
+		"test:api": "npx nx test api-framework",
+		"test:frontend": "npx nx test frontend",
+		"test:frontend-shared": "npx nx test frontend-shared",
+		"test:watch": "npx nx test frontend --watch",
+		"test:coverage": "npx nx run-many -t test --all --coverage"
 	},
 	"engines": {
 		"node": ">=20.x.x"

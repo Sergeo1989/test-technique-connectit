@@ -1,7 +1,6 @@
-import { BadRequestException, ConflictException, ConsoleLogger, NotFoundException } from "@nestjs/common";
+import { ConsoleLogger } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { LoggerService, PrismaService } from "@nx-nestjs-angular-starter/connectit-shared-api";
-import { Prisma } from "@prisma/client";
 import { ApiFrameworkService } from "./api-framework.service";
 import { FrameworkSortBy, SortOrder } from "./dto/framework-query.dto";
 
@@ -12,9 +11,6 @@ const CREATE_BODY = {
 	frameworkTypeId: 1,
 	releasedAt: new Date("2016-11-26T00:00:00.000Z"),
 };
-
-const prismaError = (code: string) =>
-	new Prisma.PrismaClientKnownRequestError(code, { code, clientVersion: "5" });
 
 describe("ApiFrameworkService", () => {
 	let service: ApiFrameworkService;
@@ -117,31 +113,15 @@ describe("ApiFrameworkService", () => {
 				expect.objectContaining({ data: CREATE_BODY })
 			);
 		});
-
-		it("maps a unique-constraint violation (P2002) to 409", async () => {
-			prisma.framework.create.mockRejectedValue(prismaError("P2002"));
-
-			await expect(service.create(CREATE_BODY)).rejects.toBeInstanceOf(ConflictException);
-		});
-
-		it("maps a foreign-key violation (P2003) to 400", async () => {
-			prisma.framework.create.mockRejectedValue(prismaError("P2003"));
-
-			await expect(service.create(CREATE_BODY)).rejects.toBeInstanceOf(BadRequestException);
-		});
 	});
 
 	describe("update", () => {
-		it("maps a missing row (P2025) to 404", async () => {
-			prisma.framework.update.mockRejectedValue(prismaError("P2025"));
+		it("updates the active row by id", async () => {
+			await service.update(5, { name: "Renamed" });
 
-			await expect(service.update(999, { name: "X" })).rejects.toBeInstanceOf(NotFoundException);
-		});
-
-		it("maps a unique-constraint violation (P2002) to 409", async () => {
-			prisma.framework.update.mockRejectedValue(prismaError("P2002"));
-
-			await expect(service.update(1, { name: "React" })).rejects.toBeInstanceOf(ConflictException);
+			expect(prisma.framework.update).toHaveBeenCalledWith(
+				expect.objectContaining({ where: { deletedAt: null, id: 5 }, data: { name: "Renamed" } })
+			);
 		});
 	});
 });

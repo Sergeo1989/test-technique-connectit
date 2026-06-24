@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { LoggerService, PrismaService } from "@nx-nestjs-angular-starter/connectit-shared-api";
 import { type PaginatedResponse } from "@nx-nestjs-angular-starter/database";
 import { Prisma, type Framework } from "@prisma/client";
@@ -29,12 +29,8 @@ export class ApiFrameworkService {
 		this.logger.setContext(ApiFrameworkService.name);
 	}
 
-	async create(data: CreateFrameworkDTO) {
-		try {
-			return await this.prismaService.framework.create({ data, include });
-		} catch (error) {
-			return this.rethrowAsHttp(error);
-		}
+	create(data: CreateFrameworkDTO) {
+		return this.prismaService.framework.create({ data, include });
 	}
 
 	readOne(id: Framework["id"]) {
@@ -78,32 +74,12 @@ export class ApiFrameworkService {
 		return { data, total, page, pageSize };
 	}
 
-	async update(id: Framework["id"], data: UpdateFrameworkDTO) {
-		try {
-			return await this.prismaService.framework.update({
-				where: { ...where, id },
-				data,
-				include,
-			});
-		} catch (error) {
-			return this.rethrowAsHttp(error);
-		}
-	}
-
-	/** Maps the Prisma constraint errors the write paths can hit to HTTP responses. */
-	private rethrowAsHttp(error: unknown): never {
-		if (error instanceof Prisma.PrismaClientKnownRequestError) {
-			if (error.code === "P2002") {
-				throw new ConflictException("A framework with this name already exists");
-			}
-			if (error.code === "P2003") {
-				throw new BadRequestException("Unknown codingLanguageId or frameworkTypeId");
-			}
-			if (error.code === "P2025") {
-				throw new NotFoundException("Framework not found");
-			}
-		}
-		throw error;
+	update(id: Framework["id"], data: UpdateFrameworkDTO) {
+		return this.prismaService.framework.update({
+			where: { ...where, id },
+			data,
+			include,
+		});
 	}
 
 	delete(id: Framework["id"]) {

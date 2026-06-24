@@ -1,7 +1,7 @@
 import { BadRequestException, Logger, type ValidationError, ValidationPipe, VersioningType } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { LoggerService } from "@nx-nestjs-angular-starter/connectit-shared-api";
+import { LoggerService, PrismaExceptionFilter } from "@nx-nestjs-angular-starter/connectit-shared-api";
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
@@ -28,6 +28,8 @@ async function bootstrap() {
 			},
 		})
 	);
+
+	app.useGlobalFilters(new PrismaExceptionFilter());
 
 	const port = 8080;
 

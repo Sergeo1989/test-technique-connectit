@@ -13,3 +13,6 @@ export * from "./prisma/prisma.service";
 // Cache
 export * from "./cache/keys";
 export * from "./cache/cache.module";
+
+// Filters
+export * from "./filters/prisma-exception.filter";

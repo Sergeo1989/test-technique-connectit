@@ -1,6 +1,6 @@
 import { BadRequestException, ConsoleLogger, INestApplication, ValidationError, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
-import { LoggerService, PrismaService } from "@nx-nestjs-angular-starter/connectit-shared-api";
+import { LoggerService, PrismaExceptionFilter, PrismaService } from "@nx-nestjs-angular-starter/connectit-shared-api";
 import { Prisma } from "@prisma/client";
 import * as request from "supertest";
 import { ApiFrameworkController } from "./api-framework.controller";
@@ -49,6 +49,7 @@ describe("ApiFrameworkController (integration)", () => {
 				exceptionFactory: (errors: ValidationError[] = []) => new BadRequestException(errors),
 			})
 		);
+		app.useGlobalFilters(new PrismaExceptionFilter());
 		await app.init();
 	});
 

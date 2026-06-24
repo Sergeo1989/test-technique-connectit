@@ -30,10 +30,11 @@ export class ApiFrameworkService {
 	}
 
 	async create(data: CreateFrameworkDTO) {
-		await this.assertNoDuplicateName(data.name);
-		await this.assertRelationsExist(data.codingLanguageId, data.frameworkTypeId);
-
-		return this.prismaService.framework.create({ data, include });
+		try {
+			return await this.prismaService.framework.create({ data, include });
+		} catch (error) {
+			return this.rethrowAsHttp(error);
+		}
 	}
 
 	readOne(id: Framework["id"]) {
@@ -78,11 +79,6 @@ export class ApiFrameworkService {
 	}
 
 	async update(id: Framework["id"], data: UpdateFrameworkDTO) {
-		if (data.name !== undefined) {
-			await this.assertNoDuplicateName(data.name, id);
-		}
-		await this.assertRelationsExist(data.codingLanguageId, data.frameworkTypeId);
-
 		try {
 			return await this.prismaService.framework.update({
 				where: { ...where, id },
@@ -90,39 +86,24 @@ export class ApiFrameworkService {
 				include,
 			});
 		} catch (error) {
-			if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-				throw new NotFoundException(`Framework ${id} not found`);
-			}
-			throw error;
+			return this.rethrowAsHttp(error);
 		}
 	}
 
-	private async assertNoDuplicateName(name: string, excludeId?: Framework["id"]) {
-		const duplicate = await this.prismaService.framework.findFirst({
-			where: { ...where, name, ...(excludeId != null ? { id: { not: excludeId } } : {}) },
-		});
-
-		if (duplicate) {
-			throw new ConflictException(`A framework named "${name}" already exists`);
-		}
-	}
-
-	private async assertRelationsExist(codingLanguageId?: number, frameworkTypeId?: number) {
-		if (codingLanguageId != null) {
-			const language = await this.prismaService.codingLanguage.findFirst({
-				where: { id: codingLanguageId, deletedAt: null },
-			});
-			if (!language) {
-				throw new BadRequestException(`Unknown codingLanguageId ${codingLanguageId}`);
+	/** Maps the Prisma constraint errors the write paths can hit to HTTP responses. */
+	private rethrowAsHttp(error: unknown): never {
+		if (error instanceof Prisma.PrismaClientKnownRequestError) {
+			if (error.code === "P2002") {
+				throw new ConflictException("A framework with this name already exists");
+			}
+			if (error.code === "P2003") {
+				throw new BadRequestException("Unknown codingLanguageId or frameworkTypeId");
+			}
+			if (error.code === "P2025") {
+				throw new NotFoundException("Framework not found");
 			}
 		}
-
-		if (frameworkTypeId != null) {
-			const type = await this.prismaService.frameworkType.findUnique({ where: { id: frameworkTypeId } });
-			if (!type) {
-				throw new BadRequestException(`Unknown frameworkTypeId ${frameworkTypeId}`);
-			}
-		}
+		throw error;
 	}
 
 	delete(id: Framework["id"]) {

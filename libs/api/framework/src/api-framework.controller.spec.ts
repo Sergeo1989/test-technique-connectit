@@ -17,9 +17,7 @@ const VALID_BODY = {
 describe("ApiFrameworkController (integration)", () => {
 	let app: INestApplication;
 	let prisma: {
-		framework: { findMany: jest.Mock; count: jest.Mock; create: jest.Mock; update: jest.Mock; findFirst: jest.Mock };
-		codingLanguage: { findFirst: jest.Mock };
-		frameworkType: { findUnique: jest.Mock };
+		framework: { findMany: jest.Mock; count: jest.Mock; create: jest.Mock; update: jest.Mock };
 		$transaction: jest.Mock;
 	};
 
@@ -30,10 +28,7 @@ describe("ApiFrameworkController (integration)", () => {
 				count: jest.fn().mockResolvedValue(0),
 				create: jest.fn().mockResolvedValue({ id: 1 }),
 				update: jest.fn().mockResolvedValue({ id: 1 }),
-				findFirst: jest.fn().mockResolvedValue(null),
 			},
-			codingLanguage: { findFirst: jest.fn().mockResolvedValue({ id: 2 }) },
-			frameworkType: { findUnique: jest.fn().mockResolvedValue({ id: 1 }) },
 			$transaction: jest.fn((operations: Promise<unknown>[]) => Promise.all(operations)),
 		};
 
@@ -129,18 +124,20 @@ describe("ApiFrameworkController (integration)", () => {
 			);
 		});
 
-		it("returns 409 when a framework with the same name already exists", async () => {
-			prisma.framework.findFirst.mockResolvedValue({ id: 9 });
+		it("returns 409 on a duplicate name (Prisma P2002)", async () => {
+			prisma.framework.create.mockRejectedValue(
+				new Prisma.PrismaClientKnownRequestError("P2002", { code: "P2002", clientVersion: "5" })
+			);
 
 			await request(app.getHttpServer()).post("/framework").send(VALID_BODY).expect(409);
-			expect(prisma.framework.create).not.toHaveBeenCalled();
 		});
 
-		it("returns 400 when the coding language does not exist", async () => {
-			prisma.codingLanguage.findFirst.mockResolvedValue(null);
+		it("returns 400 on an unknown relation (Prisma P2003)", async () => {
+			prisma.framework.create.mockRejectedValue(
+				new Prisma.PrismaClientKnownRequestError("P2003", { code: "P2003", clientVersion: "5" })
+			);
 
 			await request(app.getHttpServer()).post("/framework").send(VALID_BODY).expect(400);
-			expect(prisma.framework.create).not.toHaveBeenCalled();
 		});
 	});
 

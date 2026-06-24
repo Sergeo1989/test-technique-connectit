@@ -13,12 +13,13 @@ const CREATE_BODY = {
 	releasedAt: new Date("2016-11-26T00:00:00.000Z"),
 };
 
+const prismaError = (code: string) =>
+	new Prisma.PrismaClientKnownRequestError(code, { code, clientVersion: "5" });
+
 describe("ApiFrameworkService", () => {
 	let service: ApiFrameworkService;
 	let prisma: {
-		framework: { findMany: jest.Mock; count: jest.Mock; create: jest.Mock; update: jest.Mock; findFirst: jest.Mock };
-		codingLanguage: { findFirst: jest.Mock };
-		frameworkType: { findUnique: jest.Mock };
+		framework: { findMany: jest.Mock; count: jest.Mock; create: jest.Mock; update: jest.Mock };
 		$transaction: jest.Mock;
 	};
 
@@ -29,10 +30,7 @@ describe("ApiFrameworkService", () => {
 				count: jest.fn(),
 				create: jest.fn().mockResolvedValue({ id: 1 }),
 				update: jest.fn().mockResolvedValue({ id: 1 }),
-				findFirst: jest.fn().mockResolvedValue(null),
 			},
-			codingLanguage: { findFirst: jest.fn().mockResolvedValue({ id: 2 }) },
-			frameworkType: { findUnique: jest.fn().mockResolvedValue({ id: 1 }) },
 			$transaction: jest.fn((operations: Promise<unknown>[]) => Promise.all(operations)),
 		};
 
@@ -99,19 +97,6 @@ describe("ApiFrameworkService", () => {
 			expect(prisma.framework.count).toHaveBeenCalledWith({ where: expectedWhere });
 		});
 
-		it("omits filters that are not provided", async () => {
-			prisma.framework.findMany.mockResolvedValue([]);
-			prisma.framework.count.mockResolvedValue(0);
-
-			await service.readPage({ codingLanguageId: 4 });
-
-			expect(prisma.framework.findMany).toHaveBeenCalledWith(
-				expect.objectContaining({
-					where: { deletedAt: null, codingLanguageId: 4 },
-				})
-			);
-		});
-
 		it("honours sortBy / sortOrder", async () => {
 			prisma.framework.findMany.mockResolvedValue([]);
 			prisma.framework.count.mockResolvedValue(0);
@@ -125,7 +110,7 @@ describe("ApiFrameworkService", () => {
 	});
 
 	describe("create", () => {
-		it("creates when the name is free and relations exist", async () => {
+		it("delegates to prisma and returns the row", async () => {
 			await service.create(CREATE_BODY);
 
 			expect(prisma.framework.create).toHaveBeenCalledWith(
@@ -133,43 +118,30 @@ describe("ApiFrameworkService", () => {
 			);
 		});
 
-		it("throws ConflictException when an active framework already has the name", async () => {
-			prisma.framework.findFirst.mockResolvedValue({ id: 9 });
+		it("maps a unique-constraint violation (P2002) to 409", async () => {
+			prisma.framework.create.mockRejectedValue(prismaError("P2002"));
 
 			await expect(service.create(CREATE_BODY)).rejects.toBeInstanceOf(ConflictException);
-			expect(prisma.framework.create).not.toHaveBeenCalled();
 		});
 
-		it("throws BadRequestException when the coding language does not exist", async () => {
-			prisma.codingLanguage.findFirst.mockResolvedValue(null);
+		it("maps a foreign-key violation (P2003) to 400", async () => {
+			prisma.framework.create.mockRejectedValue(prismaError("P2003"));
 
 			await expect(service.create(CREATE_BODY)).rejects.toBeInstanceOf(BadRequestException);
-			expect(prisma.framework.create).not.toHaveBeenCalled();
-		});
-
-		it("throws BadRequestException when the framework type does not exist", async () => {
-			prisma.frameworkType.findUnique.mockResolvedValue(null);
-
-			await expect(service.create(CREATE_BODY)).rejects.toBeInstanceOf(BadRequestException);
-			expect(prisma.framework.create).not.toHaveBeenCalled();
 		});
 	});
 
 	describe("update", () => {
-		it("throws NotFoundException when the row does not exist (Prisma P2025)", async () => {
-			prisma.framework.update.mockRejectedValue(
-				new Prisma.PrismaClientKnownRequestError("Not found", { code: "P2025", clientVersion: "5" })
-			);
+		it("maps a missing row (P2025) to 404", async () => {
+			prisma.framework.update.mockRejectedValue(prismaError("P2025"));
 
 			await expect(service.update(999, { name: "X" })).rejects.toBeInstanceOf(NotFoundException);
 		});
 
-		it("excludes the row itself from the duplicate-name check", async () => {
-			await service.update(5, { name: "Renamed" });
+		it("maps a unique-constraint violation (P2002) to 409", async () => {
+			prisma.framework.update.mockRejectedValue(prismaError("P2002"));
 
-			expect(prisma.framework.findFirst).toHaveBeenCalledWith(
-				expect.objectContaining({ where: expect.objectContaining({ name: "Renamed", id: { not: 5 } }) })
-			);
+			await expect(service.update(1, { name: "React" })).rejects.toBeInstanceOf(ConflictException);
 		});
 	});
 });

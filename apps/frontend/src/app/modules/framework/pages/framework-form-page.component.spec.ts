@@ -26,16 +26,17 @@ function setup(idParam: string | null) {
 		create: jest.fn().mockResolvedValue({ id: 1 }),
 		update: jest.fn().mockResolvedValue({ id: 5 }),
 	};
-	const codingLanguageService = { readAll: jest.fn().mockReturnValue(of([{ id: 2, name: "JS" }])) };
-	const frameworkTypeService = { readAll: jest.fn().mockReturnValue(of([{ id: 1, name: "Frontend" }])) };
+	const frameworkOptions = {
+		getLanguageOptions: jest.fn().mockReturnValue(of([{ label: "JS", value: 2 }])),
+		getTypeOptions: jest.fn().mockReturnValue(of([{ label: "Frontend", value: 1 }])),
+	};
 	const router = { navigate: jest.fn() } as unknown as Router;
 	const route = { snapshot: { paramMap: { get: () => idParam } } } as unknown as ActivatedRoute;
 	const topbarService = { setHeader: jest.fn() };
 
 	const component = new FrameworkFormPageComponent(
 		frameworkService as never,
-		codingLanguageService as never,
-		frameworkTypeService as never,
+		frameworkOptions as never,
 		router,
 		route,
 		topbarService as never

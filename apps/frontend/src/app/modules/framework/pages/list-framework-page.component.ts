@@ -7,13 +7,9 @@ import type {
 	ReadOneFramework,
 	SortOrder,
 } from "@nx-nestjs-angular-starter/api/framework";
-import {
-	CodingLanguageService,
-	FrameworkService,
-	FrameworkTypeService,
-	TopbarService,
-} from "@nx-nestjs-angular-starter/frontend-shared";
+import { FrameworkService, TopbarService } from "@nx-nestjs-angular-starter/frontend-shared";
 import { FrameworkTableComponent } from "../components/framework-table/framework-table.component";
+import { FrameworkOptionsService } from "../services/framework-options.service";
 import {
 	EMPTY_FILTERS,
 	FrameworkFilters,
@@ -47,8 +43,7 @@ export class ListFrameworkPageComponent implements OnInit {
 
 	constructor(
 		private frameworkService: FrameworkService,
-		private codingLanguageService: CodingLanguageService,
-		private frameworkTypeService: FrameworkTypeService,
+		private frameworkOptions: FrameworkOptionsService,
 		private router: Router,
 		private route: ActivatedRoute,
 		topbarService: TopbarService
@@ -104,12 +99,8 @@ export class ListFrameworkPageComponent implements OnInit {
 	}
 
 	private loadDropdownOptions() {
-		this.codingLanguageService.readAll({ source: "server-only" }).subscribe(languages => {
-			this.languageOptions = languages.map(l => ({ label: l.name, value: l.id }));
-		});
-		this.frameworkTypeService.readAll({ source: "server-only" }).subscribe(types => {
-			this.typeOptions = types.map(t => ({ label: t.name, value: t.id }));
-		});
+		this.frameworkOptions.getLanguageOptions().subscribe(options => (this.languageOptions = options));
+		this.frameworkOptions.getTypeOptions().subscribe(options => (this.typeOptions = options));
 	}
 
 	private buildQuery(): FrameworkQueryDTO {

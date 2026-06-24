@@ -31,8 +31,6 @@ unitaires + intégration HTTP) ; différées pour ne pas alourdir le livrable.
 - **Test de rendu** (Angular `TestBed`) sur le composant tableau, en plus des
   tests de logique en instanciation directe.
 - **Seuils de couverture** appliqués dans la config Jest.
-- **Factoriser** le chargement des listes déroulantes (langage/type), aujourd'hui
-  dupliqué entre la page liste et la page formulaire.
 
 > Le reste (intégrité en base, contrat de sortie, gestion d'erreurs centralisée,
 > tests unitaires + intégration) a été traité dans le code.

@@ -2,15 +2,11 @@ import { Component, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 // type-only: keep the NestJS barrel out of the browser bundle.
 import type { ReadOneFramework } from "@nx-nestjs-angular-starter/api/framework";
-import {
-	CodingLanguageService,
-	FrameworkService,
-	FrameworkTypeService,
-	TopbarService,
-} from "@nx-nestjs-angular-starter/frontend-shared";
+import { FrameworkService, TopbarService } from "@nx-nestjs-angular-starter/frontend-shared";
 import { FrameworkFormComponent } from "../components/framework-form/framework-form.component";
 import { FrameworkFormValue } from "../models/framework-form.model";
 import { SelectOption } from "../models/framework-table.model";
+import { FrameworkOptionsService } from "../services/framework-options.service";
 
 const LIST_ROUTE = "/app/frameworks";
 
@@ -30,8 +26,7 @@ export class FrameworkFormPageComponent implements OnInit {
 
 	constructor(
 		private frameworkService: FrameworkService,
-		private codingLanguageService: CodingLanguageService,
-		private frameworkTypeService: FrameworkTypeService,
+		private frameworkOptions: FrameworkOptionsService,
 		private router: Router,
 		private route: ActivatedRoute,
 		private topbarService: TopbarService
@@ -70,11 +65,7 @@ export class FrameworkFormPageComponent implements OnInit {
 	}
 
 	private loadOptions() {
-		this.codingLanguageService.readAll({ source: "server-only" }).subscribe(languages => {
-			this.languageOptions = languages.map(l => ({ label: l.name, value: l.id }));
-		});
-		this.frameworkTypeService.readAll({ source: "server-only" }).subscribe(types => {
-			this.typeOptions = types.map(t => ({ label: t.name, value: t.id }));
-		});
+		this.frameworkOptions.getLanguageOptions().subscribe(options => (this.languageOptions = options));
+		this.frameworkOptions.getTypeOptions().subscribe(options => (this.typeOptions = options));
 	}
 }

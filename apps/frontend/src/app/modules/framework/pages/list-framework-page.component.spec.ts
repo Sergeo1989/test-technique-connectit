@@ -10,27 +10,28 @@ function setup(urlParams: Record<string, string> = {}) {
 	const frameworkService = {
 		readPage: jest.fn().mockReturnValue(of({ data: [{ id: 1 }], total: 1, page: 1, pageSize: 10 })),
 	};
-	const codingLanguageService = { readAll: jest.fn().mockReturnValue(of([{ id: 2, name: "JS" }])) };
-	const frameworkTypeService = { readAll: jest.fn().mockReturnValue(of([{ id: 1, name: "Frontend" }])) };
+	const frameworkOptions = {
+		getLanguageOptions: jest.fn().mockReturnValue(of([{ label: "JS", value: 2 }])),
+		getTypeOptions: jest.fn().mockReturnValue(of([{ label: "Frontend", value: 1 }])),
+	};
 	const router = { navigate: jest.fn() } as unknown as Router;
 	const route = { snapshot: { queryParamMap: queryParamMap(urlParams) } } as unknown as ActivatedRoute;
 	const topbarService = { setHeader: jest.fn() };
 
 	const component = new ListFrameworkPageComponent(
 		frameworkService as never,
-		codingLanguageService as never,
-		frameworkTypeService as never,
+		frameworkOptions as never,
 		router,
 		route,
 		topbarService as never
 	);
 
-	return { component, frameworkService, codingLanguageService, router };
+	return { component, frameworkService, frameworkOptions, router };
 }
 
 describe("ListFrameworkPageComponent (container)", () => {
 	it("restores pagination, filters and sort from the URL on init", () => {
-		const { component, codingLanguageService } = setup({
+		const { component, frameworkOptions } = setup({
 			page: "2",
 			pageSize: "20",
 			name: "Re",
@@ -47,7 +48,8 @@ describe("ListFrameworkPageComponent (container)", () => {
 		expect(component.filters).toEqual({ name: "Re", codingLanguageId: 3, frameworkTypeId: 1 });
 		expect(component.sortField).toBe("name");
 		expect(component.sortOrder).toBe(-1);
-		expect(codingLanguageService.readAll).toHaveBeenCalled();
+		expect(frameworkOptions.getLanguageOptions).toHaveBeenCalled();
+		expect(component.languageOptions).toEqual([{ label: "JS", value: 2 }]);
 	});
 
 	it("loads the page on a table load event and maps the result", () => {

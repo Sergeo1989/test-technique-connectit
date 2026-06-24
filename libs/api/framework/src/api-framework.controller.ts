@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common";
 import { type Framework } from "@nx-nestjs-angular-starter/database";
 import { ApiFrameworkService } from "./api-framework.service";
 import { CreateFrameworkDTO } from "./dto/create-framework.dto";
+import { FrameworkQueryDTO } from "./dto/framework-query.dto";
 import { UpdateFrameworkDTO } from "./dto/update-framework.dto";
 
 @Controller("framework")
@@ -9,8 +10,8 @@ export class ApiFrameworkController {
 	constructor(private apiFrameworkService: ApiFrameworkService) {}
 
 	@Get()
-	readAll() {
-		return this.apiFrameworkService.readAll();
+	readAll(@Query() query: FrameworkQueryDTO) {
+		return this.apiFrameworkService.readPage(query);
 	}
 
 	@Get(":id")
@@ -36,3 +37,4 @@ export class ApiFrameworkController {
 		return this.apiFrameworkService.delete(id);
 	}
 }
+

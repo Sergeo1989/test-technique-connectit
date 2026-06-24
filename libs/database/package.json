@@ -2,6 +2,7 @@
 	"name": "@nx-nestjs-angular-starter/database",
 	"version": "0.0.1",
 	"dependencies": {
+		"@prisma/client": "^5.15.0",
 		"tslib": "^2.3.0"
 	},
 	"type": "commonjs",

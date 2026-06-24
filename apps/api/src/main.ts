@@ -1,12 +1,11 @@
 import { BadRequestException, Logger, type ValidationError, ValidationPipe, VersioningType } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { ConfigService, LoggerService } from "@nx-nestjs-angular-starter/connectit-shared-api";
+import { LoggerService } from "@nx-nestjs-angular-starter/connectit-shared-api";
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 	const globalPrefix = "api";
-	const config = app.get(ConfigService);
 	app.setGlobalPrefix(globalPrefix);
 
 	app.enableCors({

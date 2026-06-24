@@ -13,12 +13,16 @@ const where = {
 	deletedAt: null,
 } satisfies Prisma.FrameworkWhereInput;
 
+// `deletedAt` is an internal soft-delete flag: omit it from the API contract,
+// on the framework and on the related coding language.
+const omit = { deletedAt: true } satisfies Prisma.FrameworkOmit;
+
 const include = {
-	codingLanguage: true,
+	codingLanguage: { omit: { deletedAt: true } },
 	frameworkType: true,
 } satisfies Prisma.FrameworkInclude;
 
-export type ReadOneFramework = Prisma.FrameworkGetPayload<{ include: typeof include }>;
+export type ReadOneFramework = Prisma.FrameworkGetPayload<{ include: typeof include; omit: typeof omit }>;
 
 @Injectable()
 export class ApiFrameworkService {
@@ -30,18 +34,19 @@ export class ApiFrameworkService {
 	}
 
 	create(data: CreateFrameworkDTO) {
-		return this.prismaService.framework.create({ data, include });
+		return this.prismaService.framework.create({ data, include, omit });
 	}
 
 	readOne(id: Framework["id"]) {
 		return this.prismaService.framework.findUnique({
 			where: { ...where, id },
 			include,
+			omit,
 		});
 	}
 
 	readAll() {
-		return this.prismaService.framework.findMany({ where, include });
+		return this.prismaService.framework.findMany({ where, include, omit });
 	}
 
 	async readPage(query: FrameworkQueryDTO): Promise<PaginatedResponse<ReadOneFramework>> {
@@ -64,6 +69,7 @@ export class ApiFrameworkService {
 			this.prismaService.framework.findMany({
 				where: filters,
 				include,
+				omit,
 				orderBy,
 				skip: (page - 1) * pageSize,
 				take: pageSize,
@@ -79,6 +85,7 @@ export class ApiFrameworkService {
 			where: { ...where, id },
 			data,
 			include,
+			omit,
 		});
 	}
 
@@ -86,6 +93,7 @@ export class ApiFrameworkService {
 		return this.prismaService.framework.update({
 			where: { ...where, id },
 			include,
+			omit,
 			data: { deletedAt: new Date() },
 		});
 	}

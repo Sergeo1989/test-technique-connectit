@@ -1,46 +1,155 @@
-import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
-import { FrameworkService, TopbarService } from "@nx-nestjs-angular-starter/frontend-shared";
-import { tap } from "rxjs";
-import { FrameworkCardComponent } from "../components/framework-card.component";
+import { Component, OnInit } from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+// type-only: keep the NestJS barrel out of the browser bundle.
+import type {
+	FrameworkQueryDTO,
+	FrameworkSortBy,
+	ReadOneFramework,
+	SortOrder,
+} from "@nx-nestjs-angular-starter/api/framework";
+import {
+	CodingLanguageService,
+	FrameworkService,
+	FrameworkTypeService,
+	TopbarService,
+} from "@nx-nestjs-angular-starter/frontend-shared";
+import { FrameworkTableComponent } from "../components/framework-table/framework-table.component";
+import {
+	EMPTY_FILTERS,
+	FrameworkFilters,
+	FrameworkTableLoad,
+	SelectOption,
+} from "../models/framework-table.model";
+
+const DEFAULT_ROWS = 10;
 
 @Component({
 	selector: "app-list-framework-page",
 	standalone: true,
-	imports: [CommonModule, FrameworkCardComponent],
-	template: `
-		<div class="flex flex-col gap-4">
-			<ng-container *ngIf="frameworks$ | async as frameworks">
-				@if (loading) {
-					<div class="flex items-center justify-center py-16">
-						<i class="bi bi-arrow-repeat animate-spin text-3xl text-slate-400"></i>
-					</div>
-				} @else if (frameworks.length === 0) {
-					<div class="flex flex-col items-center justify-center gap-2 py-16 text-slate-400">
-						<i class="bi bi-box-seam text-4xl"></i>
-						<p class="text-sm">Aucun framework trouvé.</p>
-					</div>
-				} @else {
-					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-						@for (framework of frameworks; track framework.id) {
-							<app-framework-card [framework]="framework" />
-						}
-					</div>
-				}
-			</ng-container>
-		</div>
-	`,
+	imports: [FrameworkTableComponent],
+	templateUrl: "./list-framework-page.component.html",
 })
-export class ListFrameworkPageComponent {
-	frameworks$ = this.frameworkService.readAll().pipe(
-		tap(() => (this.loading = false)),
-	);
-	loading = true;
+export class ListFrameworkPageComponent implements OnInit {
+	frameworks: ReadOneFramework[] = [];
+	total = 0;
+	loading = false;
+
+	first = 0;
+	rows = DEFAULT_ROWS;
+	sortField?: string;
+	sortOrder = 1;
+
+	filters: FrameworkFilters = { ...EMPTY_FILTERS };
+
+	languageOptions: SelectOption[] = [];
+	typeOptions: SelectOption[] = [];
 
 	constructor(
 		private frameworkService: FrameworkService,
-		private topbarService: TopbarService
+		private codingLanguageService: CodingLanguageService,
+		private frameworkTypeService: FrameworkTypeService,
+		private router: Router,
+		private route: ActivatedRoute,
+		topbarService: TopbarService
 	) {
-		this.topbarService.setHeader("Frameworks");
+		topbarService.setHeader("Frameworks");
+	}
+
+	ngOnInit() {
+		this.restoreStateFromUrl();
+		this.loadDropdownOptions();
+	}
+
+	onLoad(event: FrameworkTableLoad) {
+		this.first = event.first;
+		this.rows = event.rows;
+		this.sortField = event.sortField;
+		this.sortOrder = event.sortOrder;
+		this.loadFrameworks();
+	}
+
+	onFiltersChange(filters: FrameworkFilters) {
+		this.filters = filters;
+		this.first = 0;
+		this.loadFrameworks();
+	}
+
+	clearFilters() {
+		this.filters = { ...EMPTY_FILTERS };
+		this.first = 0;
+		this.loadFrameworks();
+	}
+
+	private restoreStateFromUrl() {
+		const q = this.route.snapshot.queryParamMap;
+		this.rows = Number(q.get("pageSize")) || DEFAULT_ROWS;
+		const page = Number(q.get("page")) || 1;
+		this.first = (page - 1) * this.rows;
+		this.sortField = q.get("sortBy") ?? undefined;
+		this.sortOrder = q.get("sortOrder") === "desc" ? -1 : 1;
+		this.filters = {
+			name: q.get("name") ?? "",
+			codingLanguageId: q.get("codingLanguageId") ? Number(q.get("codingLanguageId")) : null,
+			frameworkTypeId: q.get("frameworkTypeId") ? Number(q.get("frameworkTypeId")) : null,
+		};
+	}
+
+	private loadDropdownOptions() {
+		this.codingLanguageService.readAll({ source: "server-only" }).subscribe(languages => {
+			this.languageOptions = languages.map(l => ({ label: l.name, value: l.id }));
+		});
+		this.frameworkTypeService.readAll({ source: "server-only" }).subscribe(types => {
+			this.typeOptions = types.map(t => ({ label: t.name, value: t.id }));
+		});
+	}
+
+	private buildQuery(): FrameworkQueryDTO {
+		const query: FrameworkQueryDTO = {
+			page: Math.floor(this.first / this.rows) + 1,
+			pageSize: this.rows,
+		};
+
+		if (this.filters.name) query.name = this.filters.name;
+		if (this.filters.codingLanguageId != null) query.codingLanguageId = this.filters.codingLanguageId;
+		if (this.filters.frameworkTypeId != null) query.frameworkTypeId = this.filters.frameworkTypeId;
+		if (this.sortField) {
+			query.sortBy = this.sortField as FrameworkSortBy;
+			query.sortOrder = (this.sortOrder === -1 ? "desc" : "asc") as SortOrder;
+		}
+
+		return query;
+	}
+
+	private loadFrameworks() {
+		const query = this.buildQuery();
+		this.loading = true;
+
+		this.frameworkService.readPage(query).subscribe({
+			next: result => {
+				this.frameworks = result.data;
+				this.total = result.total;
+				this.loading = false;
+			},
+			error: () => (this.loading = false),
+		});
+
+		this.syncUrl(query);
+	}
+
+	private syncUrl(query: FrameworkQueryDTO) {
+		this.router.navigate([], {
+			relativeTo: this.route,
+			queryParams: {
+				page: query.page,
+				pageSize: query.pageSize,
+				name: query.name ?? null,
+				codingLanguageId: query.codingLanguageId ?? null,
+				frameworkTypeId: query.frameworkTypeId ?? null,
+				sortBy: query.sortBy ?? null,
+				sortOrder: query.sortBy ? query.sortOrder : null,
+			},
+			queryParamsHandling: "merge",
+			replaceUrl: true,
+		});
 	}
 }

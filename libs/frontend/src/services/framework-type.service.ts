@@ -18,7 +18,7 @@ export class FrameworkTypeService extends BaseService<
 	never
 > {
 	constructor(httpClient: HttpClient) {
-		super(`${environment.apiURL}/framework`, httpClient);
+		super(`${environment.apiURL}/framework-type`, httpClient);
 	}
 
 	// Example of a request that does not exist in BaseService

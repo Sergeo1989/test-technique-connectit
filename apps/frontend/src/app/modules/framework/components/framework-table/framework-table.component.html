@@ -1,0 +1,104 @@
+<p-table
+	[value]="frameworks"
+	[lazy]="true"
+	(onLazyLoad)="onLazyLoad($event)"
+	[paginator]="true"
+	[rows]="rows"
+	[first]="first"
+	[totalRecords]="total"
+	[rowsPerPageOptions]="[10, 20, 50]"
+	[loading]="loading"
+	[sortField]="sortField"
+	[sortOrder]="sortOrder"
+	[showCurrentPageReport]="true"
+	currentPageReportTemplate="{first}–{last} sur {totalRecords}"
+	dataKey="id"
+	styleClass="p-datatable-sm"
+>
+	<ng-template pTemplate="caption">
+		<div class="flex flex-wrap items-end gap-3">
+			<div class="filter-field flex flex-col gap-1">
+				<label class="text-xs font-medium text-slate-500" for="name-filter">Nom</label>
+				<input
+					id="name-filter"
+					type="text"
+					pInputText
+					placeholder="Rechercher…"
+					[ngModel]="model.name"
+					(ngModelChange)="onNameInput($event)"
+				/>
+			</div>
+
+			<div class="filter-field flex flex-col gap-1">
+				<label class="text-xs font-medium text-slate-500">Langage</label>
+				<p-dropdown
+					[options]="languageOptions"
+					[(ngModel)]="model.codingLanguageId"
+					optionLabel="label"
+					optionValue="value"
+					placeholder="Tous"
+					[showClear]="true"
+					(onChange)="onDropdownChange()"
+					(onClear)="onDropdownChange()"
+				/>
+			</div>
+
+			<div class="filter-field flex flex-col gap-1">
+				<label class="text-xs font-medium text-slate-500">Type</label>
+				<p-dropdown
+					[options]="typeOptions"
+					[(ngModel)]="model.frameworkTypeId"
+					optionLabel="label"
+					optionValue="value"
+					placeholder="Tous"
+					[showClear]="true"
+					(onChange)="onDropdownChange()"
+					(onClear)="onDropdownChange()"
+				/>
+			</div>
+
+			<button
+				*ngIf="hasActiveFilters"
+				type="button"
+				class="ml-auto inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
+				(click)="clearFilters()"
+			>
+				<i class="bi bi-x-circle"></i> Réinitialiser
+			</button>
+		</div>
+	</ng-template>
+
+	<ng-template pTemplate="header">
+		<tr>
+			<th class="w-16">Image</th>
+			<th pSortableColumn="name">Nom <p-sortIcon field="name" /></th>
+			<th>Langage</th>
+			<th>Type</th>
+			<th pSortableColumn="releasedAt">Date de sortie <p-sortIcon field="releasedAt" /></th>
+		</tr>
+	</ng-template>
+
+	<ng-template pTemplate="body" let-framework>
+		<tr class="framework-row" (click)="rowClick.emit(framework)">
+			<td>
+				<img
+					*ngIf="framework.img"
+					[src]="framework.img"
+					[alt]="framework.name"
+					class="h-8 w-8 object-contain"
+					(error)="onImgError($event)"
+				/>
+			</td>
+			<td class="font-medium text-slate-800">{{ framework.name }}</td>
+			<td>{{ framework.codingLanguage.name }}</td>
+			<td>{{ framework.frameworkType.name }}</td>
+			<td>{{ framework.releasedAt | date: "dd/MM/yyyy" }}</td>
+		</tr>
+	</ng-template>
+
+	<ng-template pTemplate="emptymessage">
+		<tr>
+			<td colspan="5" class="py-8 text-center text-slate-400">Aucun framework trouvé.</td>
+		</tr>
+	</ng-template>
+</p-table>

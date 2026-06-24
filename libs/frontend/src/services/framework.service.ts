@@ -1,7 +1,15 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpParams } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { CreateFrameworkDTO, ReadOneFramework, UpdateFrameworkDTO } from "@nx-nestjs-angular-starter/api/framework";
+// type-only: avoids pulling the NestJS barrel runtime into the browser bundle.
+import type {
+	CreateFrameworkDTO,
+	FrameworkQueryDTO,
+	ReadOneFramework,
+	UpdateFrameworkDTO,
+} from "@nx-nestjs-angular-starter/api/framework";
+import type { PaginatedResponse } from "@nx-nestjs-angular-starter/database";
 import { BaseService } from "@nx-nestjs-angular-starter/connectit-shared-frontend";
+import { Observable } from "rxjs";
 import { environment } from "../environments/environment";
 
 @Injectable({
@@ -12,12 +20,15 @@ export class FrameworkService extends BaseService<ReadOneFramework, CreateFramew
 		super(`${environment.apiURL}/framework`, httpClient);
 	}
 
-	// Example of a request that does not exist in BaseService
-	// public exampleRequest(employeeId: Employee["id"], data: ExampleRequestDataDTO) {
-	// 	return firstValueFrom(
-	// 		this.httpClient
-	// 			.patch<ReadOneEmployee | null>(`${this.baseUrl}/${employeeId}/example-request`, data)
-	// 			.pipe(tap(employee => employee && this.saveToCache(employee)))
-	// 	);
-	// }
+	public readPage(query: FrameworkQueryDTO): Observable<PaginatedResponse<ReadOneFramework>> {
+		let params = new HttpParams();
+
+		for (const [key, value] of Object.entries(query)) {
+			if (value !== undefined && value !== null && value !== "") {
+				params = params.set(key, String(value));
+			}
+		}
+
+		return this.httpClient.get<PaginatedResponse<ReadOneFramework>>(this.baseUrl, { params });
+	}
 }

@@ -1,0 +1,15 @@
+<app-framework-table
+	[frameworks]="frameworks"
+	[total]="total"
+	[loading]="loading"
+	[first]="first"
+	[rows]="rows"
+	[sortField]="sortField"
+	[sortOrder]="sortOrder"
+	[filters]="filters"
+	[languageOptions]="languageOptions"
+	[typeOptions]="typeOptions"
+	(loadRequest)="onLoad($event)"
+	(filtersChange)="onFiltersChange($event)"
+	(clearRequest)="clearFilters()"
+/>

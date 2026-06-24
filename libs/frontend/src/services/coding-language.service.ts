@@ -18,7 +18,7 @@ export class CodingLanguageService extends BaseService<
 	never
 > {
 	constructor(httpClient: HttpClient) {
-		super(`${environment.apiURL}/CodingLanguage`, httpClient);
+		super(`${environment.apiURL}/coding-language`, httpClient);
 	}
 
 	// Example of a request that does not exist in BaseService

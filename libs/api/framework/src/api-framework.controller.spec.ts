@@ -1,20 +1,39 @@
 import { BadRequestException, ConsoleLogger, INestApplication, ValidationError, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { LoggerService, PrismaService } from "@nx-nestjs-angular-starter/connectit-shared-api";
+import { Prisma } from "@prisma/client";
 import * as request from "supertest";
 import { ApiFrameworkController } from "./api-framework.controller";
 import { ApiFrameworkService } from "./api-framework.service";
 
+const VALID_BODY = {
+	name: "Svelte",
+	img: "https://cdn.simpleicons.org/svelte",
+	codingLanguageId: 2,
+	frameworkTypeId: 1,
+	releasedAt: "2016-11-26T00:00:00.000Z",
+};
+
 describe("ApiFrameworkController (integration)", () => {
 	let app: INestApplication;
 	let prisma: {
-		framework: { findMany: jest.Mock; count: jest.Mock };
+		framework: { findMany: jest.Mock; count: jest.Mock; create: jest.Mock; update: jest.Mock; findFirst: jest.Mock };
+		codingLanguage: { findFirst: jest.Mock };
+		frameworkType: { findUnique: jest.Mock };
 		$transaction: jest.Mock;
 	};
 
 	beforeEach(async () => {
 		prisma = {
-			framework: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) },
+			framework: {
+				findMany: jest.fn().mockResolvedValue([]),
+				count: jest.fn().mockResolvedValue(0),
+				create: jest.fn().mockResolvedValue({ id: 1 }),
+				update: jest.fn().mockResolvedValue({ id: 1 }),
+				findFirst: jest.fn().mockResolvedValue(null),
+			},
+			codingLanguage: { findFirst: jest.fn().mockResolvedValue({ id: 2 }) },
+			frameworkType: { findUnique: jest.fn().mockResolvedValue({ id: 1 }) },
 			$transaction: jest.fn((operations: Promise<unknown>[]) => Promise.all(operations)),
 		};
 
@@ -81,5 +100,72 @@ describe("ApiFrameworkController (integration)", () => {
 		expect(prisma.framework.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({ where: { deletedAt: null } })
 		);
+	});
+
+	describe("POST /framework", () => {
+		it("creates a framework from a valid body", async () => {
+			await request(app.getHttpServer()).post("/framework").send(VALID_BODY).expect(201);
+
+			expect(prisma.framework.create).toHaveBeenCalledWith(
+				expect.objectContaining({ data: VALID_BODY })
+			);
+		});
+
+		it("rejects a body missing required fields with 400", async () => {
+			const withoutName: Record<string, unknown> = { ...VALID_BODY };
+			delete withoutName["name"];
+			await request(app.getHttpServer()).post("/framework").send(withoutName).expect(400);
+			expect(prisma.framework.create).not.toHaveBeenCalled();
+		});
+
+		it("strips unknown fields (whitelist)", async () => {
+			await request(app.getHttpServer())
+				.post("/framework")
+				.send({ ...VALID_BODY, hacked: true })
+				.expect(201);
+
+			expect(prisma.framework.create).toHaveBeenCalledWith(
+				expect.objectContaining({ data: VALID_BODY })
+			);
+		});
+
+		it("returns 409 when a framework with the same name already exists", async () => {
+			prisma.framework.findFirst.mockResolvedValue({ id: 9 });
+
+			await request(app.getHttpServer()).post("/framework").send(VALID_BODY).expect(409);
+			expect(prisma.framework.create).not.toHaveBeenCalled();
+		});
+
+		it("returns 400 when the coding language does not exist", async () => {
+			prisma.codingLanguage.findFirst.mockResolvedValue(null);
+
+			await request(app.getHttpServer()).post("/framework").send(VALID_BODY).expect(400);
+			expect(prisma.framework.create).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("PATCH /framework/:id", () => {
+		it("applies a partial update", async () => {
+			await request(app.getHttpServer()).patch("/framework/1").send({ name: "Renamed" }).expect(200);
+
+			expect(prisma.framework.update).toHaveBeenCalledWith(
+				expect.objectContaining({ where: { deletedAt: null, id: 1 }, data: { name: "Renamed" } })
+			);
+		});
+
+		it("rejects an invalid field type with 400", async () => {
+			await request(app.getHttpServer())
+				.patch("/framework/1")
+				.send({ codingLanguageId: "not-a-number" })
+				.expect(400);
+		});
+
+		it("returns 404 when the framework does not exist", async () => {
+			prisma.framework.update.mockRejectedValue(
+				new Prisma.PrismaClientKnownRequestError("Not found", { code: "P2025", clientVersion: "5" })
+			);
+
+			await request(app.getHttpServer()).patch("/framework/999").send({ name: "X" }).expect(404);
+		});
 	});
 });

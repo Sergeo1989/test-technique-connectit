@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from "@angular/common/http";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { FrameworkFormValue } from "../models/framework-form.model";
@@ -33,16 +34,18 @@ function setup(idParam: string | null) {
 	const router = { navigate: jest.fn() } as unknown as Router;
 	const route = { snapshot: { paramMap: { get: () => idParam } } } as unknown as ActivatedRoute;
 	const topbarService = { setHeader: jest.fn() };
+	const messageService = { add: jest.fn() };
 
 	const component = new FrameworkFormPageComponent(
 		frameworkService as never,
 		frameworkOptions as never,
 		router,
 		route,
-		topbarService as never
+		topbarService as never,
+		messageService as never
 	);
 
-	return { component, frameworkService, router, topbarService };
+	return { component, frameworkService, router, topbarService, messageService };
 }
 
 describe("FrameworkFormPageComponent (container)", () => {
@@ -66,6 +69,20 @@ describe("FrameworkFormPageComponent (container)", () => {
 			expect(frameworkService.create).toHaveBeenCalledWith(VALUE);
 			expect(frameworkService.update).not.toHaveBeenCalled();
 			expect(router.navigate).toHaveBeenCalledWith(["/app/frameworks"]);
+		});
+
+		it("shows an error toast and stays on the form when the API rejects (409)", async () => {
+			const { component, frameworkService, router, messageService } = setup(null);
+			frameworkService.create.mockRejectedValue(new HttpErrorResponse({ status: 409 }));
+			component.ngOnInit();
+
+			await component.onSave(VALUE);
+
+			expect(messageService.add).toHaveBeenCalledWith(
+				expect.objectContaining({ severity: "error", detail: "Un framework portant ce nom existe déjà." })
+			);
+			expect(router.navigate).not.toHaveBeenCalled();
+			expect(component.submitting).toBe(false);
 		});
 	});
 

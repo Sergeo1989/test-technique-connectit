@@ -1,8 +1,10 @@
+import { HttpErrorResponse, HttpStatusCode } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 // type-only: keep the NestJS barrel out of the browser bundle.
 import type { ReadOneFramework } from "@nx-nestjs-angular-starter/api/framework";
 import { FrameworkService, TopbarService } from "@nx-nestjs-angular-starter/frontend-shared";
+import { MessageService } from "primeng/api";
 import { FrameworkFormComponent } from "../components/framework-form/framework-form.component";
 import { FrameworkFormValue } from "../models/framework-form.model";
 import { SelectOption } from "../models/framework-table.model";
@@ -29,7 +31,8 @@ export class FrameworkFormPageComponent implements OnInit {
 		private frameworkOptions: FrameworkOptionsService,
 		private router: Router,
 		private route: ActivatedRoute,
-		private topbarService: TopbarService
+		private topbarService: TopbarService,
+		private messageService: MessageService
 	) {}
 
 	ngOnInit() {
@@ -54,10 +57,29 @@ export class FrameworkFormPageComponent implements OnInit {
 			} else {
 				await this.frameworkService.create(value);
 			}
+			this.messageService.add({ severity: "success", summary: "Framework enregistré" });
 			this.router.navigate([LIST_ROUTE]);
+		} catch (error) {
+			this.messageService.add({
+				severity: "error",
+				summary: "Échec de l'enregistrement",
+				detail: this.errorMessage(error),
+			});
 		} finally {
 			this.submitting = false;
 		}
+	}
+
+	private errorMessage(error: unknown): string {
+		if (error instanceof HttpErrorResponse) {
+			if (error.status === HttpStatusCode.Conflict) {
+				return "Un framework portant ce nom existe déjà.";
+			}
+			if (typeof error.error?.message === "string") {
+				return error.error.message;
+			}
+		}
+		return "Une erreur est survenue. Veuillez réessayer.";
 	}
 
 	onCancel() {
